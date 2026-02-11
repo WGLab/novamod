@@ -1,0 +1,25 @@
+# data / outputs (usually huge)
+data/
+feature/
+input/
+utility/
+scripts/
+evaluation/
+training/validation/
+
+# temp / cache
+__pycache__/
+*.pyc
+.cache/
+.ipynb_checkpoints/
+*.log
+*.tmp
+
+# HPC / slurm
+*.out
+*.err
+
+# secrets
+.env
+*.key
+*.pem
