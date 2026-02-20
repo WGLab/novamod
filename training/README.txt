@@ -12,6 +12,7 @@ test5: RNA, trained on unmodified RNA oligos, large model (256,128), warmup beta
 test6: DNA, trained on unmodified DNA oligos, large model (256,128), warmup beta = 1e-3 in 10 epochs, increased sampling rate
 test7: RNA, trained on unmodified RNA oligos, large model (256,128), warmup beta = 1e-3 in 10 epochs, increased sampling rate
 test8: DNA, trained on unmodified DNA oligos, large model (256,128), warmup beta = 1e-4 in 10 epochs, increased sampling rate
+test9: DNA, trained on unmodified DNA oligos (shuffled), large model (256,128), warmup beta = 1e-4 in 10 epochs
 
 static-
 test0: DNA, oligos, static, small model (64,64), static beta = 1e-3

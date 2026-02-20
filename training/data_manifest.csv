@@ -1,0 +1,15 @@
+data_id,condition,reference,type,size,file_path,label_path,notes
+human-ref,ref,,,,/home/zouy1/software/reference/GRCh38.primary_assembly.genome.fa,,
+dnaoligos-ref,ref,,dna,,/home/zouy1/projects/RNAmod/novamod/data/oligos/dna/all_5mers.fa,,
+rnaoligos-ref,ref,,rna,,/home/zouy1/projects/RNAmod/novamod/data/oligos/rna/sampled_context_strands.fa,,
+hg002-wga,unmod,human-ref,dna,full,/mnt/isilon/wang_lab/umair/deepmod/model_features/r10_5khz_drd.v1_full_bam/HG002_WGA/HG002_WGA.final.bam,,
+hek293t-ivt,unmod,human-ref,rna,full,/home/zouy1/projects/RNAmod/novamod/data/rna/20240411_HEK293T_IVT/20240411_HEK293T_IVT.final.bam,,
+dnaoligos-control1,unmod,dnaoligos-ref,dna,subset,/mnt/isilon/wang_lab/umair/deepmod/model_training/kit14_5kHz_v5.0_train/ONT_oligos/signal_bam/control_rep1/shuffled_subsample.bam,,
+dnaoligos-control2,unmod,dnaoligos-ref,dna,subset,/mnt/isilon/wang_lab/umair/deepmod/model_training/kit14_5kHz_v5.0_train/ONT_oligos/signal_bam/control_rep2/shuffled_subsample.bam,,
+dnaoligos-5mC1,mod,dnaoligos-ref,dna,subset,/mnt/isilon/wang_lab/umair/deepmod/model_training/kit14_5kHz_v5.0_train/ONT_oligos/signal_bam/5mC_rep1/shuffled_subsample.bam,,
+dnaoligos-5mC2,mod,dnaoligos-ref,dna,subset,/mnt/isilon/wang_lab/umair/deepmod/model_training/kit14_5kHz_v5.0_train/ONT_oligos/signal_bam/5mC_rep2/shuffled_subsample.bam,,
+dnaoligos-5hmC1,mod,dnaoligos-ref,dna,subset,/mnt/isilon/wang_lab/umair/deepmod/model_training/kit14_5kHz_v5.0_train/ONT_oligos/signal_bam/5hmC_rep1/shuffled_subsample.bam,,
+dnaoligos-5hmC2,mod,dnaoligos-ref,dna,subset,/mnt/isilon/wang_lab/umair/deepmod/model_training/kit14_5kHz_v5.0_train/ONT_oligos/signal_bam/5hmC_rep2/shuffled_subsample.bam,,
+dnaoligos-6mA1,mod,dnaoligos-ref,dna,subset,/mnt/isilon/wang_lab/umair/deepmod/model_training/kit14_5kHz_v5.0_train/ONT_oligos/signal_bam/6mA_rep1/shuffled_subsample.bam,,
+dnaoligos-6mA2,mod,dnaoligos-ref,dna,subset,/mnt/isilon/wang_lab/umair/deepmod/model_training/kit14_5kHz_v5.0_train/ONT_oligos/signal_bam/6mA_rep2/shuffled_subsample.bam,,
+

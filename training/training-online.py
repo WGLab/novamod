@@ -22,24 +22,25 @@ print(f"Using {device}.")
 
 # In[2]:
 
-
 from torch.utils.data import DataLoader
 import dataset_utils as du
+import pandas as pd
 
-dna_hs = "/mnt/isilon/wang_lab/umair/deepmod/model_features/r10_5khz_drd.v1_full_bam/HG002_WGA/HG002_WGA.final.bam"
-rna_hs = "/home/zouy1/projects/RNAmod/VAE/data/RNA/20240411_HEK293T_IVT/20240411_HEK293T_IVT.final.bam"
-ref_hs = "/home/zouy1/software/reference/GRCh38.primary_assembly.genome.fa"
+import pandas as pd
 
-#dna_oligos = "/home/zouy1/projects/RNAmod/VAE/data/oligos/DNA/control_rep1/control_rep1.subset.final.bam"
-dna_oligos = "/mnt/isilon/wang_lab/umair/projects/5hmC/ONT_oligos/features/full_data/full_read/test/CG/control_rep1/control_rep1_CG.bam"
-rna_oligos = "/home/zouy1/projects/RNAmod/VAE/data/oligos/RNA/control_rep1/control_rep1.subset.final.bam"
-ref_oligos_dna = '/home/zouy1/projects/RNAmod/VAE/data/oligos/DNA/all_5mers.fa'
-ref_oligos_rna = '/home/zouy1/projects/RNAmod/VAE/data/oligos/RNA/sampled_context_strands.fa'
+def load_manifest(path, data_id):
+    df = pd.read_csv(path).set_index("data_id")
+    row = df.loc[data_id]
+    if row.condition == "ref":
+        raise ValueError("Reference file provided.")
+    return row.file_path, df.loc[row.reference].file_path, row.type
+
+bam, ref, typ = load_manifest("data_manifest.csv", "dnaoligos-control1")
 
 #specify training data
 ds = du.SignalBAMkmerIterableDataset(
-    bam_path=dna_oligos,           # data
-    ref_fasta_path=ref_oligos_dna, # reference
+    bam_path=bam,           # data
+    ref_fasta_path=ref, # reference
     cfg=du.SamplingConfig(
         kmer_len=7,
         flank=3,
@@ -48,7 +49,7 @@ ds = du.SignalBAMkmerIterableDataset(
         normalize_signal=True,
         seed=42,
     ),
-    seq_type="dna",                # type
+    seq_type=typ,                # type
     max_samples_per_epoch=None,
 )
 
@@ -97,10 +98,11 @@ class TrainConfig:
 
 def train_vae(model, dataset, loader, device, model_name, run_name, cfg: TrainConfig):
     model.to(device)
-    opt = AdamW(model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
-
-    best_val = float("inf")
-    best_state = None
+    parameters = [
+        {"params": [p for n, p in model.named_parameters() if not any(nd in n for nd in ["bias", "LayerNorm.weight"])], "weight_decay": cfg.weight_decay},
+        {"params": [p for n, p in model.named_parameters() if any(nd in n for nd in ["bias", "LayerNorm.weight"])], "weight_decay": 0.0}
+    ]
+    opt = AdamW(parameters, lr=cfg.lr)
 
     for epoch in range(1, cfg.epochs + 1):
         dataset.set_epoch(epoch)   # change rng seed for data sampling
@@ -178,7 +180,7 @@ model = m.VAE(
 #print(model)
 
 # Change run configurations here
-run_name = "online_test8"
+run_name = "online_test9"
 n_epoch = 20
 
 cfg = TrainConfig(epochs=n_epoch, beta_max=1e-4, weight_decay=1e-4, beta_warmup_epochs=10, lr=1e-4, recon="mse")
