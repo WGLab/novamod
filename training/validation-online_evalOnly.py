@@ -51,7 +51,7 @@ def valData(bam, ref, seq_type, method, spec, num_workers=20):
     if method == "site":
         #spec: pos_list
         ds = du.SignalBAMRefPosValidationDataset(
-            bam_path=c_bam,
+            bam_path=bam,
             ref_fasta_path=ref,
             seq_type=seq_type,
             pos_list=spec,

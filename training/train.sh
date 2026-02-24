@@ -7,13 +7,13 @@
 #SBATCH --gres=gpu:1
 #SBATCH -J Otrain --out=logs/%x.out
 
-TAG=$1
+CONFIG_PATH=${1:-configs/train_online.example.json}
 
-echo "Running training with tag: $TAG"
+echo "Running training with config: $CONFIG_PATH"
 
 module load CUDA
 
 echo "Running on node: $(hostname)"
 nvidia-smi
 
-python -u training-online.py
+python -u training-online.py --config "$CONFIG_PATH"
