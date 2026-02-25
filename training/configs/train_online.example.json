@@ -41,6 +41,10 @@
     "beta_max": 0.0001,
     "beta_warmup_epochs": 10,
     "grad_clip": 1.0,
-    "recon": "mse"
+    "recon": "mse",
+    "huber_delta": 1.0,
+    "nll_var": 1.0,
+    "kmer_weight_center_base": 0.0,
+    "kmer_weight_sd": 1.5
   }
 }

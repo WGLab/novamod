@@ -31,6 +31,10 @@ class TrainConfig:
     beta_warmup_epochs: int = 10
     grad_clip: float = 1.0
     recon: str = "mse"
+    huber_delta: float = 1.0
+    nll_var: float = 1.0
+    kmer_weight_center_base: float = 0.0
+    kmer_weight_sd: float = 1.0
 
 
 def parse_args() -> argparse.Namespace:
@@ -96,13 +100,36 @@ def vae_loss(
     logvar: torch.Tensor,
     beta: float = 1.0,
     recon: str = "mse",
+    huber_delta: float = 1.0,
+    nll_var: float = 1.0,
+    kmer_weight_center_base: float = 0.0,
+    kmer_weight_sd: float = 1.0,
 ) -> Dict[str, torch.Tensor]:
+    if x.dim() != 3:
+        raise ValueError(f"Expected reconstruction tensors shaped [B, T, F], got {x.shape}.")
+
+    seq_len = x.shape[1]
+    kmer_pos = torch.arange(seq_len, device=x.device, dtype=x.dtype) - (seq_len - 1) / 2.0
+    if kmer_weight_sd <= 0:
+        raise ValueError("kmer_weight_sd must be > 0.")
+    kmer_weights = torch.exp(-0.5 * ((kmer_pos - kmer_weight_center_base) / kmer_weight_sd) ** 2)
+    kmer_weights = kmer_weights / kmer_weights.sum()
+
     if recon == "mse":
-        recon_loss = F.mse_loss(x_hat, x, reduction="mean")
+        pointwise_recon = F.mse_loss(x_hat, x, reduction="none")
     elif recon == "l1":
-        recon_loss = F.l1_loss(x_hat, x, reduction="mean")
+        pointwise_recon = F.l1_loss(x_hat, x, reduction="none")
+    elif recon == "huber":
+        pointwise_recon = F.huber_loss(x_hat, x, reduction="none", delta=huber_delta)
+    elif recon == "nll":
+        if nll_var <= 0:
+            raise ValueError("nll_var must be > 0.")
+        pointwise_recon = -torch.distributions.Normal(x_hat, nll_var**0.5).log_prob(x)
     else:
         raise ValueError(f"Unsupported recon loss: {recon}")
+
+    recon_per_timestep = pointwise_recon.mean(dim=2)
+    recon_loss = torch.sum(recon_per_timestep * kmer_weights.unsqueeze(0), dim=1).mean()
 
     kl = 0.5 * torch.mean(torch.sum(torch.exp(logvar) + mu**2 - 1.0 - logvar, dim=1))
     loss = recon_loss + beta * kl
@@ -156,7 +183,18 @@ def train_vae(
             optimizer.zero_grad(set_to_none=True)
 
             out = model(x)
-            losses = vae_loss(x, out["x_hat"], out["mu"], out["logvar"], beta=beta, recon=cfg.recon)
+            losses = vae_loss(
+                x,
+                out["x_hat"],
+                out["mu"],
+                out["logvar"],
+                beta=beta,
+                recon=cfg.recon,
+                huber_delta=cfg.huber_delta,
+                nll_var=cfg.nll_var,
+                kmer_weight_center_base=cfg.kmer_weight_center_base,
+                kmer_weight_sd=cfg.kmer_weight_sd,
+            )
             losses["loss"].backward()
 
             if cfg.grad_clip and cfg.grad_clip > 0:
