@@ -15,6 +15,15 @@ Training now reads all run settings from JSON config files.
 - launch locally: `python training-online.py --config configs/train_online.example.json`
 - slurm launch: `sbatch train.sh configs/train_online.example.json`
 
+
+Config-driven validation (implemented)
+--------------------------------------
+Validation now reads model/checkpoint/dataset settings from JSON config files.
+
+- example config: `configs/val.example.json`
+- launch locally: `python val.py --config configs/val.example.json`
+- slurm launch: `sbatch val.sh configs/val.example.json`
+
 Experiment naming reference
 ---------------------------
 online-
