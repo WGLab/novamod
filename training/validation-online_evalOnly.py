@@ -27,7 +27,7 @@ print(f"Using {device}.")
 from torch.utils.data import DataLoader
 import dataset_utils as du
 
-def valData(bam, ref, seq_type, method, spec, num_workers=20):
+def valData(bam, ref, seq_type, method, spec, num_workers=20, kmer_len=7):
     if method == "region":
         #spec: [chrom, start, end]
         ds = du.SignalBAMRegionDataset(
@@ -37,7 +37,7 @@ def valData(bam, ref, seq_type, method, spec, num_workers=20):
             chrom=spec[0],
             start=spec[1],
             end=spec[2],
-            kmer_len=7,
+            kmer_len=kmer_len,
         )
     if method == "nt":
         #spec: label_path
@@ -84,7 +84,8 @@ pos_list = f"/home/zouy1/projects/RNAmod/VAE/data/oligos/DNA/labels/all_5mers_{m
 region1 = ["chr20", 58837550, 58890800]
 region2 = ["chr22", 25343801, 25393801]
 
-val_loader = valData(hg_bam, ref_hs, "dna", method="region", spec=region2)
+kmer_len = 7
+val_loader = valData(hg_bam, ref_hs, "dna", method="region", spec=region2, kmer_len=kmer_len)
 
 
 # ### Evaluation
@@ -132,7 +133,7 @@ import feature_utils as fu
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-def anomaly_score(model, loader, device, out_path):
+def anomaly_score(model, loader, device, out_path, kmer_len=7):
     model.eval()
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
 
@@ -148,7 +149,7 @@ def anomaly_score(model, loader, device, out_path):
             scores = recon_score.detach().cpu().numpy()  # [B]
             labels = y.detach().cpu().numpy()            # [B] or [B, ...]
             # metadata
-            kmers = [fu.decode_kmer(km) for km in kmer.detach().cpu()]
+            kmers = [fu.decode_kmer(km, k=kmer_len) for km in kmer.detach().cpu()]
             pos_rows = []
             for i in range(x.shape[0]):
                 pos_rows.append({k: (v[i] if isinstance(v, (list, tuple)) else v[i].item())
@@ -179,5 +180,5 @@ def anomaly_score(model, loader, device, out_path):
     return out_path
 
 #Run analysis
-anomaly_score(model, val_loader, device, out_path="./validation/validation_result3-region2-wt.pq")
+anomaly_score(model, val_loader, device, out_path="./validation/validation_result3-region2-wt.pq", kmer_len=kmer_len)
 

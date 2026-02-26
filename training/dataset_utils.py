@@ -30,6 +30,20 @@ class SamplingConfig:
     normalize_signal: bool = True       # apply Read.normalize()
     seed: int = 0                       # base seed; worker/epoch can offset externally
 
+    def __post_init__(self) -> None:
+        self.kmer_len = int(self.kmer_len)
+        self.flank = int(self.flank)
+        if self.kmer_len <= 0:
+            raise ValueError("kmer_len must be positive.")
+        if self.kmer_len % 2 == 0:
+            raise ValueError("kmer_len must be odd so a center base exists.")
+        if self.kmer_len != (2 * self.flank + 1):
+            raise ValueError("kmer_len must equal 2*flank+1.")
+        # k-mer codes are currently stored in signed int32 tensors.
+        # Keep a strict bound so packed base-4 codes never overflow.
+        if self.kmer_len > 15:
+            raise ValueError("kmer_len > 15 is unsupported with int32 k-mer codes.")
+
 
 def _onehot_base_num(base_num: int) -> np.ndarray:
     # base_num is 0..3 for A/C/G/T; other -> all zeros

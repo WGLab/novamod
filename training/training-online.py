@@ -87,6 +87,13 @@ def build_loader(cfg: Dict[str, Any]) -> tuple[Any, DataLoader]:
 
 
 def build_model(cfg: Dict[str, Any]) -> tuple[str, torch.nn.Module]:
+    sampling_k = int(cfg["data"]["sampling"]["kmer_len"])
+    model_seq_len = int(cfg["model"]["kwargs"].get("seq_len", sampling_k))
+    if model_seq_len != sampling_k:
+        raise ValueError(
+            f"Config mismatch: data.sampling.kmer_len={sampling_k} but model.kwargs.seq_len={model_seq_len}."
+        )
+
     module = importlib.import_module(cfg["model"]["module"])
     importlib.reload(module)
     model = module.VAE(**cfg["model"]["kwargs"])

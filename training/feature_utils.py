@@ -85,15 +85,19 @@ def encode_kmer(kmer, k: int = 9) -> np.uint32:
         b = str(kmer).strip().encode("ascii")
     # ---- ASCII → base‑4 digits in one vectorised step ----------------------
     ascii_vals = np.frombuffer(b, dtype=np.uint8)
+    if ascii_vals.size != k:
+        raise ValueError(f"Expected a {k}-mer, got length {ascii_vals.size}.")
     digits = lut[ascii_vals]
-    # ---- pack 9 × 2 bits into one 18‑bit integer ---------------------------
+    if np.any(digits > 3):
+        raise ValueError(f"kmer contains non-ACGT bases: {kmer}")
+    # ---- pack k × 2 bits into one integer ----------------------------------
     code = 0
     for d in digits:
         code = (code << 2) | int(d)
     if code >= (1 << 2*k):           # 2k‑bit ceiling for any k‑mer
         raise ValueError(
             f"Internal check failed: kmer {kmer} exceeds {2*k}-bit range, "
-            "which means this input was not a single 9‑mer."
+            "which means this input length does not match the configured k."
         )
         
     return np.uint32(code)
@@ -112,7 +116,11 @@ def encode_base(kmer, k: int = 9) -> np.uint32:
         b = str(kmer).strip().encode("ascii")
     # ---- ASCII → base‑4 digits in one vectorised step ----------------------
     ascii_vals = np.frombuffer(b, dtype=np.uint8)
+    if ascii_vals.size != k:
+        raise ValueError(f"Expected a {k}-mer, got length {ascii_vals.size}.")
     digits = lut[ascii_vals]
+    if np.any(digits > 3):
+        raise ValueError(f"kmer contains non-ACGT bases: {kmer}")
     base = digits[int((k-1)/2)]
         
     return np.uint32(base)
