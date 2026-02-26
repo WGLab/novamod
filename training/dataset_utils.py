@@ -114,6 +114,7 @@ class SignalBAMkmerIterableDataset(IterableDataset):
         cfg: SamplingConfig = SamplingConfig(),
         seq_type: str = "rna",
         chrom_list: Optional[List[str]] = None,
+        require_mapped: bool = True,
         allow_secondary: bool = False,
         allow_supplementary: bool = False,
         max_samples_per_epoch: Optional[int] = None,
@@ -124,6 +125,7 @@ class SignalBAMkmerIterableDataset(IterableDataset):
         self.cfg = cfg
         self.seq_type = seq_type
         self.chrom_list = chrom_list or []
+        self.require_mapped = require_mapped
         self.allow_secondary = allow_secondary
         self.allow_supplementary = allow_supplementary
         self.max_samples_per_epoch = max_samples_per_epoch
@@ -193,7 +195,7 @@ class SignalBAMkmerIterableDataset(IterableDataset):
             if not self._worker_shard_ok(read_idx):
                 continue
 
-            if self.cfg.require_mapped and (not bam_read.is_mapped):
+            if self.require_mapped and (not bam_read.is_mapped):
                 continue
             if (not self.allow_secondary) and bam_read.is_secondary:
                 continue
@@ -399,6 +401,7 @@ class SignalBAMkmerValidationDataset(IterableDataset):
         normalize_signal: bool = True,
         seq_type: str = "rna",
         chrom_list: Optional[List[str]] = None,
+        require_mapped: bool = True,
         allow_secondary: bool = False,
         allow_supplementary: bool = False,
     ):
@@ -413,6 +416,7 @@ class SignalBAMkmerValidationDataset(IterableDataset):
 
         self.seq_type = seq_type
         self.chrom_list = chrom_list or []
+        self.require_mapped = require_mapped
         self.allow_secondary = allow_secondary
         self.allow_supplementary = allow_supplementary
 
@@ -437,8 +441,7 @@ class SignalBAMkmerValidationDataset(IterableDataset):
         for read_idx, bam_read in enumerate(bam.fetch(until_eof=True)):
             if not self._worker_shard_ok(read_idx):
                 continue
-
-            if not bam_read.is_mapped:
+            if self.require_mapped and (not bam_read.is_mapped):
                 continue
             if (not self.allow_secondary) and bam_read.is_secondary:
                 continue
@@ -554,14 +557,6 @@ def _range_slice_positions(sorted_pos_label: List[Tuple[int, float]], start: int
     i1 = bisect.bisect_left(positions, end)
     return sorted_pos_label[i0:i1]
 
-@dataclass
-class ValStreamConfig:
-    kmer_len: int = 7
-    normalize_signal: bool = True
-    require_mapped: bool = True
-    allow_secondary: bool = False
-    allow_supplementary: bool = False
-
 
 class SignalBAMRefPosValidationDataset(IterableDataset):
     """
@@ -576,10 +571,14 @@ class SignalBAMRefPosValidationDataset(IterableDataset):
         bam_path: str,
         ref_fasta_path: str,
         pos_list: str,
+        kmer_len: int = 7,
+        normalize_signal: bool = True,
         seq_type: str = "rna",
         chrom_list: Optional[List[str]] = None,
-        cfg: ValStreamConfig = ValStreamConfig(),
         max_lines: int = 100000,
+        require_mapped: bool = True,
+        allow_secondary: bool = False,
+        allow_supplementary: bool = False,
     ):
         super().__init__()
         self.bam_path = bam_path
@@ -587,11 +586,13 @@ class SignalBAMRefPosValidationDataset(IterableDataset):
         self.seq_type = seq_type
         self.pos_list = pos_list
         self.chrom_list = chrom_list or []
-        self.cfg = cfg
         self.max_lines = max_lines
-
-        self.k = int(cfg.kmer_len)
+        self.k = kmer_len
         self.flank = (self.k - 1) // 2
+        self.normalize_signal = normalize_signal
+        self.require_mapped = require_mapped
+        self.allow_secondary = allow_secondary
+        self.allow_supplementary = allow_supplementary
 
         # Preload reference numeric encoding using your utility
         self.ref_seq_dict, _, self.labelled_pos_list = bam_utils.pre_process(
@@ -615,11 +616,12 @@ class SignalBAMRefPosValidationDataset(IterableDataset):
         for read_idx, bam_read in enumerate(bam.fetch(until_eof=True)):
             if not self._worker_shard_ok(read_idx):
                 continue
-            if self.cfg.require_mapped and (not bam_read.is_mapped):
+                
+            if self.require_mapped and (not bam_read.is_mapped):
                 continue
-            if (not self.cfg.allow_secondary) and bam_read.is_secondary:
+            if (not self.allow_secondary) and bam_read.is_secondary:
                 continue
-            if (not self.cfg.allow_supplementary) and bam_read.is_supplementary:
+            if (not self.allow_supplementary) and bam_read.is_supplementary:
                 continue
 
             # Build Read object via your SignalBAM helpers
@@ -664,7 +666,7 @@ class SignalBAMRefPosValidationDataset(IterableDataset):
                 cigarstring=cigarstring,
             )
 
-            if self.cfg.normalize_signal:
+            if self.normalize_signal:
                 read_obj.normalize()
 
             # Determine read strand and pick the correct label bucket
@@ -762,7 +764,7 @@ class SignalBAMRefPosValidationDataset(IterableDataset):
 #validation with region
 class SignalBAMRegionDataset(IterableDataset):
     def __init__(self, bam_path, ref_fasta_path, chrom, start, end, kmer_len=7, seq_type="rna",
-                 normalize_signal=True, fake_label=1.0):
+                 normalize_signal=True, require_mapped=True, fake_label=1.0):
         super().__init__()
         self.bam_path=bam_path
         self.ref_fasta_path=ref_fasta_path
@@ -773,6 +775,7 @@ class SignalBAMRegionDataset(IterableDataset):
         self.flank=(self.k-1)//2
         self.seq_type=seq_type
         self.normalize_signal=normalize_signal
+        self.require_mapped=require_mapped
         self.fake_label=fake_label
 
         self.ref_seq_dict, _, _ = bam_utils.pre_process(
@@ -785,7 +788,7 @@ class SignalBAMRegionDataset(IterableDataset):
         bam = pysam.AlignmentFile(self.bam_path, "rb")
         # Requires BAM index (.bai). If missing, index it first.
         for bam_read in bam.fetch(self.chrom, self.start, self.end):
-            if not bam_read.is_mapped:
+            if self.require_mapped and (not bam_read.is_mapped):
                 continue
             try:
                 (move_table, mat, base_qual, full_seq, aligned_pairs, read_name, ref_name,

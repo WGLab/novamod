@@ -1,0 +1,57 @@
+{
+  "run": {
+    "run_name": "online_test9"
+  },
+  "data": {
+    "manifest_path": "data_manifest.csv",
+    "sampling": {
+      "kmer_len": 9,
+      "normalize_signal": true
+    }
+  },
+  "model": {
+    "module": "models.model_v1_cnn_t",
+    "kwargs": {
+      "n_features": 11,
+      "seq_len": 9,
+      "d_model": 256,
+      "cnn_channels": 128,
+      "n_heads": 4,
+      "n_layers": 3,
+      "latent_dim": 16,
+      "dropout": 0.0,
+      "use_cls_token": true
+    }
+  },
+  "train": {
+    "recon": "nll",
+    "huber_delta": 1.0,
+    "nll_var": 1.0,
+    "kmer_weight_center_base": 0.0,
+    "kmer_weight_sd": 3.0
+  },
+  "val": {
+    "checkpoint_epoch": 20,
+    "output_dir": "validation",
+    "loader": {
+      "batch_size": 256,
+      "num_workers": 10
+    },
+    "datasets": [
+      {
+        "name": "val",
+        "data_id": "dnaoligos-control1",
+        "method": "site",
+        "spec": "../data/oligos/dna/labels/all_5mers_5mC_sites.bed",
+        "max_lines": 10000
+      },
+      {
+        "name": "test",
+        "data_id": "dnaoligos-5mC1",
+        "method": "site",
+        "spec": "../data/oligos/dna/labels/all_5mers_5mC_sites.bed",
+        "max_lines": 10000
+      }
+    ]
+  }
+}

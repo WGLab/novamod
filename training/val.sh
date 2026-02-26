@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#SBATCH --time=08:00:00
+#SBATCH --time=00:10:00
 #SBATCH -c 10
-#SBATCH --mem=16G
+#SBATCH --mem=8G
 #SBATCH -p gpuq
 #SBATCH --gres=gpu:1
 #SBATCH -J Oval --out=logs/%x.out
