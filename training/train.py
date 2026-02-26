@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-"""Online training entrypoint for VAE models.
+"""
+Online training entrypoint for VAE models.
 
-This script is intentionally config-driven so experiments are explicit and reproducible.
 """
 
 from __future__ import annotations
