@@ -13,7 +13,8 @@
       "max_kmer_count": 10000,
       "normalize_signal": true,
       "seed": 42
-    }
+    },
+    "exclude_chromosome": null
   },
   "loader": {
     "batch_size": 256,
