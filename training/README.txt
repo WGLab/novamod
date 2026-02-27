@@ -38,6 +38,7 @@ online-
 - test8: DNA, unmodified DNA oligos, large model (256,128), warmup beta to 1e-4 over 10 epochs, increased sampling rate
 - test9: DNA, shuffled unmodified DNA oligos, large model (256,128), warmup beta to 1e-4 over 10 epochs
 - test10: DNA, HG002-WGA, large model, NLL weighted loss, warmup
+- test11: DNA, HG002-WGA, large model, NLL weighted loss, warmup, training optimized
 
 static-
 - test0: DNA oligos, static, small model (64,64), static beta=1e-3

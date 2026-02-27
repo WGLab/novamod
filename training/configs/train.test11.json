@@ -1,0 +1,51 @@
+{
+  "run": {
+    "run_name": "online_test11"
+  },
+  "data": {
+    "manifest_path": "data_manifest.csv",
+    "data_id": "hg002-wga",
+    "max_samples_per_epoch": null,
+    "sampling": {
+      "kmer_len": 9,
+      "flank": 4,
+      "positions_per_read": 20,
+      "max_kmer_count": 10000,
+      "normalize_signal": true,
+      "seed": 42
+    }
+  },
+  "loader": {
+    "batch_size": 256,
+    "num_workers": 20,
+    "persistent_workers": true,
+    "pin_memory": true
+  },
+  "model": {
+    "module": "models.model_v1_cnn_t",
+    "kwargs": {
+      "n_features": 11,
+      "seq_len": 9,
+      "d_model": 256,
+      "cnn_channels": 128,
+      "n_heads": 4,
+      "n_layers": 3,
+      "latent_dim": 16,
+      "dropout": 0.0,
+      "use_cls_token": true
+    }
+  },
+  "train": {
+    "lr": 0.0001,
+    "weight_decay": 0.0001,
+    "epochs": 20,
+    "beta_max": 0.001,
+    "beta_warmup_epochs": 10,
+    "grad_clip": 1.0,
+    "recon": "nll",
+    "huber_delta": 1.0,
+    "nll_var": 1.0,
+    "kmer_weight_center_base": 0.0,
+    "kmer_weight_sd": 3.0
+  }
+}
