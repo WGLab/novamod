@@ -85,6 +85,18 @@ def build_loader(cfg: Dict[str, Any]) -> tuple[Any, DataLoader]:
     manifest_path = cfg["data"]["manifest_path"]
     data_id = cfg["data"]["data_id"]
     bam, ref, seq_type = load_manifest(manifest_path, data_id)
+    exclude_chromosome = cfg["data"].get("exclude_chromosome")
+
+    chrom_list = None
+    if exclude_chromosome is not None:
+        import pysam
+
+        with pysam.AlignmentFile(bam, "rb") as bam_file:
+            chrom_list = [chrom for chrom in bam_file.references if chrom != exclude_chromosome]
+        if not chrom_list:
+            raise ValueError(
+                f"Excluding chromosome '{exclude_chromosome}' removed every chromosome from training data."
+            )
 
     sampling_cfg = du.SamplingConfig(**cfg["data"]["sampling"])
     dataset = du.SignalBAMkmerIterableDataset(
@@ -92,6 +104,7 @@ def build_loader(cfg: Dict[str, Any]) -> tuple[Any, DataLoader]:
         ref_fasta_path=ref,
         cfg=sampling_cfg,
         seq_type=seq_type,
+        chrom_list=chrom_list,
         max_samples_per_epoch=cfg["data"].get("max_samples_per_epoch"),
     )
 

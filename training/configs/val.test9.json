@@ -43,14 +43,16 @@
         "data_id": "dnaoligos-control1",
         "method": "site",
         "spec": "../data/oligos/dna/labels/all_5mers_5mC_sites.bed",
-        "max_lines": 10000
+        "max_lines": 10000,
+        "chromosome": null
       },
       {
         "name": "test",
         "data_id": "dnaoligos-5mC1",
         "method": "site",
         "spec": "../data/oligos/dna/labels/all_5mers_5mC_sites.bed",
-        "max_lines": 10000
+        "max_lines": 10000,
+        "chromosome": null
       }
     ]
   }
