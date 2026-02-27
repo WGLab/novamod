@@ -22,6 +22,10 @@ from torch.utils.data import DataLoader
 import dataset_utils as du
 
 
+LOGVAR_MIN = -20.0
+LOGVAR_MAX = 10.0
+
+
 @dataclass
 class TrainConfig:
     lr: float = 2e-4
@@ -138,7 +142,8 @@ def vae_loss(
     recon_per_timestep = pointwise_recon.mean(dim=2)
     recon_loss = torch.sum(recon_per_timestep * kmer_weights.unsqueeze(0), dim=1).mean()
 
-    kl = 0.5 * torch.mean(torch.sum(torch.exp(logvar) + mu**2 - 1.0 - logvar, dim=1))
+    logvar_safe = logvar.clamp(min=LOGVAR_MIN, max=LOGVAR_MAX)
+    kl = 0.5 * torch.mean(torch.sum(torch.exp(logvar_safe) + mu**2 - 1.0 - logvar_safe, dim=1))
     loss = recon_loss + beta * kl
     return {"loss": loss, "recon": recon_loss, "kl": kl}
 
@@ -172,6 +177,7 @@ def train_vae(
         },
     ]
     optimizer = AdamW(parameters, lr=cfg.lr)
+    skipped_nonfinite_batches = 0
 
     for epoch in range(1, cfg.epochs + 1):
         dataset.set_epoch(epoch)
@@ -187,9 +193,15 @@ def train_vae(
 
         for x, _, _ in loader:
             x = x.to(device)
+            if not torch.isfinite(x).all():
+                skipped_nonfinite_batches += 1
+                continue
             optimizer.zero_grad(set_to_none=True)
 
             out = model(x)
+            if not all(torch.isfinite(out[key]).all() for key in ("x_hat", "mu", "logvar")):
+                skipped_nonfinite_batches += 1
+                continue
             losses = vae_loss(
                 x,
                 out["x_hat"],
@@ -222,6 +234,8 @@ def train_vae(
             f"Epoch {epoch:03d} | beta={beta:.4f} | "
             f"train total {tr_total:.5f} (recon {tr_recon:.5f}, kl {tr_kl:.5f})"
         )
+        if skipped_nonfinite_batches:
+            print(f"  skipped {skipped_nonfinite_batches} batch(es) with non-finite tensors so far")
 
         store_path = Path("state_dicts") / model_name / f"{run_name}-epoch{epoch}.pt"
         store_path.parent.mkdir(parents=True, exist_ok=True)
