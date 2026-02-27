@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader
 
 import dataset_utils as du
 import feature_utils as fu
-from train import load_json, load_manifest
+from train import LOGVAR_MAX, LOGVAR_MIN, load_json, load_manifest
 
 
 def parse_args() -> argparse.Namespace:
@@ -137,7 +137,8 @@ def reconstruction_score_per_sample(
 
 
 def kl_per_sample(mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
-    return 0.5 * torch.sum(torch.exp(logvar) + mu**2 - 1.0 - logvar, dim=1)
+    logvar_safe = logvar.clamp(min=LOGVAR_MIN, max=LOGVAR_MAX)
+    return 0.5 * torch.sum(torch.exp(logvar_safe) + mu**2 - 1.0 - logvar_safe, dim=1)
 
 
 def _pos_rows_from_batch(pos: Dict[str, Any], batch_size: int) -> List[Dict[str, Any]]:
