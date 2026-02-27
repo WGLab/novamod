@@ -12,7 +12,7 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 import torch
 from torch.nn import functional as F
@@ -24,6 +24,20 @@ import dataset_utils as du
 
 LOGVAR_MIN = -20.0
 LOGVAR_MAX = 10.0
+
+
+def _build_kmer_weights(
+    seq_len: int,
+    device: torch.device,
+    dtype: torch.dtype,
+    center_base: float,
+    sd: float,
+) -> torch.Tensor:
+    if sd <= 0:
+        raise ValueError("kmer_weight_sd must be > 0.")
+    pos = torch.arange(seq_len, device=device, dtype=dtype) - (seq_len - 1) / 2.0
+    weights = torch.exp(-0.5 * ((pos - center_base) / sd) ** 2)
+    return weights / weights.sum()
 
 
 @dataclass
@@ -81,11 +95,13 @@ def build_loader(cfg: Dict[str, Any]) -> tuple[Any, DataLoader]:
         max_samples_per_epoch=cfg["data"].get("max_samples_per_epoch"),
     )
 
+    pin_memory = cfg["loader"].get("pin_memory", torch.cuda.is_available())
     loader = DataLoader(
         dataset,
         batch_size=cfg["loader"].get("batch_size", 256),
         num_workers=cfg["loader"].get("num_workers", 20),
         persistent_workers=cfg["loader"].get("persistent_workers", True),
+        pin_memory=pin_memory,
     )
     return dataset, loader
 
@@ -109,22 +125,14 @@ def vae_loss(
     x_hat: torch.Tensor,
     mu: torch.Tensor,
     logvar: torch.Tensor,
+    kmer_weights: torch.Tensor,
     beta: float = 1.0,
     recon: str = "mse",
     huber_delta: float = 1.0,
     nll_var: float = 1.0,
-    kmer_weight_center_base: float = 0.0,
-    kmer_weight_sd: float = 1.0,
 ) -> Dict[str, torch.Tensor]:
     if x.dim() != 3:
         raise ValueError(f"Expected reconstruction tensors shaped [B, T, F], got {x.shape}.")
-
-    seq_len = x.shape[1]
-    kmer_pos = torch.arange(seq_len, device=x.device, dtype=x.dtype) - (seq_len - 1) / 2.0
-    if kmer_weight_sd <= 0:
-        raise ValueError("kmer_weight_sd must be > 0.")
-    kmer_weights = torch.exp(-0.5 * ((kmer_pos - kmer_weight_center_base) / kmer_weight_sd) ** 2)
-    kmer_weights = kmer_weights / kmer_weights.sum()
 
     if recon == "mse":
         pointwise_recon = F.mse_loss(x_hat, x, reduction="none")
@@ -135,7 +143,8 @@ def vae_loss(
     elif recon == "nll":
         if nll_var <= 0:
             raise ValueError("nll_var must be > 0.")
-        pointwise_recon = -torch.distributions.Normal(x_hat, nll_var**0.5).log_prob(x)
+        inv_var = 1.0 / nll_var
+        pointwise_recon = 0.5 * ((x - x_hat) ** 2 * inv_var + torch.log(x.new_tensor(2.0 * torch.pi * nll_var)))
     else:
         raise ValueError(f"Unsupported recon loss: {recon}")
 
@@ -178,6 +187,7 @@ def train_vae(
     ]
     optimizer = AdamW(parameters, lr=cfg.lr)
     skipped_nonfinite_batches = 0
+    kmer_weight_cache: Dict[Tuple[int, torch.device, torch.dtype], torch.Tensor] = {}
 
     for epoch in range(1, cfg.epochs + 1):
         dataset.set_epoch(epoch)
@@ -192,7 +202,7 @@ def train_vae(
         n_batches = 0
 
         for x, _, _ in loader:
-            x = x.to(device)
+            x = x.to(device, non_blocking=True)
             if not torch.isfinite(x).all():
                 skipped_nonfinite_batches += 1
                 continue
@@ -202,17 +212,26 @@ def train_vae(
             if not all(torch.isfinite(out[key]).all() for key in ("x_hat", "mu", "logvar")):
                 skipped_nonfinite_batches += 1
                 continue
+            cache_key = (x.shape[1], x.device, x.dtype)
+            if cache_key not in kmer_weight_cache:
+                kmer_weight_cache[cache_key] = _build_kmer_weights(
+                    seq_len=x.shape[1],
+                    device=x.device,
+                    dtype=x.dtype,
+                    center_base=cfg.kmer_weight_center_base,
+                    sd=cfg.kmer_weight_sd,
+                )
+
             losses = vae_loss(
                 x,
                 out["x_hat"],
                 out["mu"],
                 out["logvar"],
+                kmer_weights=kmer_weight_cache[cache_key],
                 beta=beta,
                 recon=cfg.recon,
                 huber_delta=cfg.huber_delta,
                 nll_var=cfg.nll_var,
-                kmer_weight_center_base=cfg.kmer_weight_center_base,
-                kmer_weight_sd=cfg.kmer_weight_sd,
             )
             losses["loss"].backward()
 

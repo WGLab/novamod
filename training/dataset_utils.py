@@ -18,6 +18,9 @@ import feature_utils
 import torch.distributed as dist
 
 
+_ONEHOT_BASES = np.eye(4, dtype=np.float32)
+
+
 @dataclass
 class SamplingConfig:
     kmer_len: int = 7
@@ -51,6 +54,17 @@ def _onehot_base_num(base_num: int) -> np.ndarray:
     if 0 <= base_num <= 3:
         out[base_num] = 1.0
     return out
+
+
+def _encode_kmer_from_numeric(kmer_nums: np.ndarray) -> int:
+    """
+    Encode numeric A/C/G/T digits (0..3) into packed base-4 integer.
+    This avoids repeated string conversion for every sampled center.
+    """
+    code = 0
+    for digit in kmer_nums:
+        code = (code << 2) | int(digit)
+    return code
 
 
 def _build_read_to_ref_map(aligned_pairs: np.ndarray, read_len: int) -> np.ndarray:
@@ -296,12 +310,7 @@ class SignalBAMkmerIterableDataset(IterableDataset):
                 if self.cfg.min_ref_window_ok and np.any(kmer_nums > 3):
                     continue
 
-                # Encode k-mer (string A/C/G/T) with feature_utils.encode_kmer :contentReference[oaicite:9]{index=9} :contentReference[oaicite:10]{index=10}
-                kmer_str = "".join(bam_utils.num_to_base_map[int(x)] for x in kmer_nums)
-                try:
-                    kmer_code = int(feature_utils.encode_kmer(kmer_str, k=k))  # :contentReference[oaicite:11]{index=11}
-                except Exception:
-                    continue
+                kmer_code = _encode_kmer_from_numeric(kmer_nums)
 
                 # Online k-mer balancing (streaming)
                 if not self._accept_kmer(kmer_code, rng):
@@ -321,7 +330,7 @@ class SignalBAMkmerIterableDataset(IterableDataset):
                 qual_7 = read_obj.base_qual[center - flank : center + flank + 1].astype(np.float32, copy=False)  # (7,)
 
                 # One-hot bases for 7 positions (use reference 7-mer context)
-                onehot_7x4 = np.stack([_onehot_base_num(int(b)) for b in kmer_nums], axis=0)  # (7,4)
+                onehot_7x4 = _ONEHOT_BASES[kmer_nums]  # (k,4)
 
                 # Assemble final 7x11 feature matrix
                 # columns = [4 onehot, 6 stats, 1 base_qual]
@@ -507,11 +516,7 @@ class SignalBAMkmerValidationDataset(IterableDataset):
                 if np.any(kmer_nums > 3):
                     continue
 
-                kmer_str = "".join(bam_utils.num_to_base_map[int(x)] for x in kmer_nums)
-                try:
-                    kmer_code = int(feature_utils.encode_kmer(kmer_str, k=self.k))
-                except Exception:
-                    continue
+                kmer_code = _encode_kmer_from_numeric(kmer_nums)
 
                 # per-read signals for the 7 bases around center (read coords)
                 chunk = []
@@ -520,7 +525,7 @@ class SignalBAMkmerValidationDataset(IterableDataset):
 
                 stats_7x6 = feature_utils.extract_kmer_features(chunk, self.k)  # (7,6)
                 qual_7 = read_obj.base_qual[center - self.flank : center + self.flank + 1].astype(np.float32, copy=False)
-                onehot_7x4 = np.stack([_onehot_base_num(int(b)) for b in kmer_nums], axis=0)
+                onehot_7x4 = _ONEHOT_BASES[kmer_nums]
 
                 feats = np.concatenate(
                     [onehot_7x4, stats_7x6.astype(np.float32, copy=False), qual_7[:, None]],
