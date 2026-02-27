@@ -1,5 +1,6 @@
 data_id,condition,reference,type,size,file_path,label_path,notes
 human-ref,ref,,,,/home/zouy1/software/reference/GRCh38.primary_assembly.genome.fa,,
+ecoli-ref,ref,,,,/mnt/isilon/wang_lab/zac/software/reference/Ecoli_K12_MG1655_NCBI.fa,,
 dnaoligos-ref,ref,,dna,,/home/zouy1/projects/RNAmod/novamod/data/oligos/dna/all_5mers.fa,,
 rnaoligos-ref,ref,,rna,,/home/zouy1/projects/RNAmod/novamod/data/oligos/rna/sampled_context_strands.fa,,
 hg002-wga,unmod,human-ref,dna,full,/mnt/isilon/wang_lab/umair/deepmod/model_features/r10_5khz_drd.v1_full_bam/HG002_WGA/HG002_WGA.final.bam,,
@@ -12,4 +13,6 @@ dnaoligos-5hmC1,mod,dnaoligos-ref,dna,subset,/mnt/isilon/wang_lab/umair/deepmod/
 dnaoligos-5hmC2,mod,dnaoligos-ref,dna,subset,/mnt/isilon/wang_lab/umair/deepmod/model_training/kit14_5kHz_v5.0_train/ONT_oligos/signal_bam/5hmC_rep2/shuffled_subsample.bam,,
 dnaoligos-6mA1,mod,dnaoligos-ref,dna,subset,/mnt/isilon/wang_lab/umair/deepmod/model_training/kit14_5kHz_v5.0_train/ONT_oligos/signal_bam/6mA_rep1/shuffled_subsample.bam,,
 dnaoligos-6mA2,mod,dnaoligos-ref,dna,subset,/mnt/isilon/wang_lab/umair/deepmod/model_training/kit14_5kHz_v5.0_train/ONT_oligos/signal_bam/6mA_rep2/shuffled_subsample.bam,,
+ecoli-mCpG,mod,ecoli-ref,dna,full,/mnt/isilon/wang_lab/umair/scratch/sowpati_align/signal_bams/Ecoli_DM_MSssI_5kHz/converted.bam.tmp_0.bam,,
+ecoli-nc,unmod,ecoli-ref,dna,full,/mnt/isilon/wang_lab/umair/scratch/sowpati_align/signal_bams/Ecoli_DM_5kHz/converted.bam.tmp_0.bam,,
 

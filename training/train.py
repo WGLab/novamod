@@ -97,6 +97,7 @@ def build_model(cfg: Dict[str, Any]) -> tuple[str, torch.nn.Module]:
     module = importlib.import_module(cfg["model"]["module"])
     importlib.reload(module)
     model = module.VAE(**cfg["model"]["kwargs"])
+    print(f"Total parameters: {sum([x.numel() for x in model.parameters()])}")
     return module.META.name, model
 
 

@@ -5,7 +5,7 @@
 #SBATCH --mem=16G
 #SBATCH -p gpuq
 #SBATCH --gres=gpu:1
-#SBATCH -J Otrain --out=logs/%x.out
+#SBATCH -J otrain --out=logs/%x.out
 
 CONFIG_PATH=${1:-configs/train_online.example.json}
 
@@ -16,4 +16,4 @@ module load CUDA
 echo "Running on node: $(hostname)"
 nvidia-smi
 
-python -u training-online.py --config "$CONFIG_PATH"
+python -u train.py --config "$CONFIG_PATH"
