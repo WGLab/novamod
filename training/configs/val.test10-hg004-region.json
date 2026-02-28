@@ -39,11 +39,19 @@
     },
     "datasets": [
       {
-        "name": "val-hg004",
+        "name": "val-hg004-region1",
         "data_id": "hg004-wt",
-        "method": "site",
-        "spec": "/mnt/isilon/wang_lab/zac/projects/RNAmod/novamod/data/dna/labels/HG004.dp.10.lt_0.1.gt_0.9.chr22.bed",
-        "max_lines": 20000,
+        "method": "region",
+        "spec": ["chr20", 58837550, 58890800],
+        "max_lines": 100000,
+        "chromosomes": []
+      },
+      {
+        "name": "val-hg004-region2",
+        "data_id": "hg004-wt",
+        "method": "region",
+        "spec": ["chr22", 25343801, 25393801],
+        "max_lines": 100000,
         "chromosomes": []
       }
     ]

@@ -7,7 +7,7 @@ hg002-wga,unmod,human-ref,dna,full,/mnt/isilon/wang_lab/umair/deepmod/model_feat
 hek293t-ivt,unmod,human-ref,rna,full,/home/zouy1/projects/RNAmod/novamod/data/rna/20240411_HEK293T_IVT/20240411_HEK293T_IVT.final.bam,,
 hg002-wt,mod,human-ref,dna,full,/mnt/isilon/wang_lab/umair/deepmod/model_features/r10_5khz_drd.v1_full_bam/HG002/HG002.final.bam,,
 hg003-wt,mod,human-ref,dna,full,/mnt/isilon/wang_lab/umair/deepmod/model_features/r10_5khz_drd.v1_full_bam/HG003/HG003.final.bam,,
-hg004-wt,mod,human-ref,dna,full,/mnt/isilon/wang_lab/umair/deepmod/model_features/r10_5khz_drd.v1_full_bam/HG004/HG004.final.bam,/mnt/isilon/wang_lab/umair/deepmod/epiqc/merged/HG004/dp.10/training_labels/HG004.dp.10.lt_0.1.gt_0.9.chr22.zero_based,
+hg004-wt,mod,human-ref,dna,full,/mnt/isilon/wang_lab/umair/deepmod/model_features/r10_5khz_drd.v1_full_bam/HG004/HG004.final.bam,/mnt/isilon/wang_lab/zac/projects/RNAmod/novamod/data/dna/labels/HG004.dp.10.lt_0.1.ht_0.9.chr22.bed,
 dnaoligos-control1,unmod,dnaoligos-ref,dna,subset,/mnt/isilon/wang_lab/umair/deepmod/model_training/kit14_5kHz_v5.0_train/ONT_oligos/signal_bam/control_rep1/shuffled_subsample.bam,,
 dnaoligos-control2,unmod,dnaoligos-ref,dna,subset,/mnt/isilon/wang_lab/umair/deepmod/model_training/kit14_5kHz_v5.0_train/ONT_oligos/signal_bam/control_rep2/shuffled_subsample.bam,,
 dnaoligos-5mC1,mod,dnaoligos-ref,dna,subset,/mnt/isilon/wang_lab/umair/deepmod/model_training/kit14_5kHz_v5.0_train/ONT_oligos/signal_bam/5mC_rep1/shuffled_subsample.bam,/mnt/isilon/wang_lab/zac/projects/RNAmod/novamod/data/oligos/dna/labels/all_5mers_5mC_sites.bed,
