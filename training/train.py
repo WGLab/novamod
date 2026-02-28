@@ -86,12 +86,39 @@ def build_loader(cfg: Dict[str, Any]) -> tuple[Any, DataLoader]:
     data_id = cfg["data"]["data_id"]
     bam, ref, seq_type = load_manifest(manifest_path, data_id)
 
+    data_cfg = cfg["data"]
+    exclude_chromosome = data_cfg.get("exclude_chromosome")
+    exclude_chromosomes = data_cfg.get("exclude_chromosomes")
+    if exclude_chromosome is not None and exclude_chromosomes is not None:
+        raise ValueError("Use only one of data.exclude_chromosome or data.exclude_chromosomes.")
+
+    excluded: set[str] = set()
+    if exclude_chromosome is not None:
+        excluded = {str(exclude_chromosome)}
+    elif exclude_chromosomes is not None:
+        if not isinstance(exclude_chromosomes, list):
+            raise ValueError("data.exclude_chromosomes must be a list of chromosome names.")
+        excluded = {str(chrom) for chrom in exclude_chromosomes}
+
+    chrom_list = None
+    if excluded:
+        import pysam
+
+        with pysam.AlignmentFile(bam, "rb") as bam_file:
+            chrom_list = [chrom for chrom in bam_file.references if chrom not in excluded]
+        if not chrom_list:
+            excluded_str = ", ".join(sorted(excluded))
+            raise ValueError(
+                f"Excluding chromosome(s) [{excluded_str}] removed every chromosome from training data."
+            )
+
     sampling_cfg = du.SamplingConfig(**cfg["data"]["sampling"])
     dataset = du.SignalBAMkmerIterableDataset(
         bam_path=bam,
         ref_fasta_path=ref,
         cfg=sampling_cfg,
         seq_type=seq_type,
+        chrom_list=chrom_list,
         max_samples_per_epoch=cfg["data"].get("max_samples_per_epoch"),
     )
 

@@ -55,6 +55,19 @@ def build_val_loader(cfg: Dict[str, Any], dataset_cfg: Dict[str, Any]) -> DataLo
     kmer_len = int(sampling_cfg["kmer_len"])
     normalize_signal = bool(sampling_cfg.get("normalize_signal", True))
     max_lines = int(dataset_cfg.get("max_lines", 10000))
+    chromosome = dataset_cfg.get("chromosome")
+    chromosomes = dataset_cfg.get("chromosomes")
+    if chromosome is not None and chromosomes is not None:
+        raise ValueError("Use only one of dataset chromosome or chromosomes.")
+
+    if chromosome is not None:
+        chrom_list = [str(chromosome)]
+    elif chromosomes is not None:
+        if not isinstance(chromosomes, list):
+            raise ValueError("dataset chromosomes must be a list of chromosome names.")
+        chrom_list = [str(chrom) for chrom in chromosomes]
+    else:
+        chrom_list = None
 
     if method == "site":
         ds = du.SignalBAMRefPosValidationDataset(
@@ -65,6 +78,7 @@ def build_val_loader(cfg: Dict[str, Any], dataset_cfg: Dict[str, Any]) -> DataLo
             max_lines=max_lines,
             kmer_len=kmer_len,
             normalize_signal=normalize_signal,
+            chrom_list=chrom_list,
         )
     elif method == "nt":
         ds = du.SignalBAMkmerValidationDataset(
@@ -75,6 +89,7 @@ def build_val_loader(cfg: Dict[str, Any], dataset_cfg: Dict[str, Any]) -> DataLo
             max_lines=max_lines,
             kmer_len=kmer_len,
             normalize_signal=normalize_signal,
+            chrom_list=chrom_list,
         )
     elif method == "region":
         chrom, start, end = dataset_cfg["spec"]
