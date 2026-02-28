@@ -56,7 +56,6 @@ def build_val_loader(cfg: Dict[str, Any], dataset_cfg: Dict[str, Any]) -> DataLo
     normalize_signal = bool(sampling_cfg.get("normalize_signal", True))
     max_lines = int(dataset_cfg.get("max_lines", 10000))
     chromosome = dataset_cfg.get("chromosome")
-<<<<<<< codex/add-chromosome-exclusion-feature-to-training
     chromosomes = dataset_cfg.get("chromosomes")
     if chromosome is not None and chromosomes is not None:
         raise ValueError("Use only one of dataset chromosome or chromosomes.")
@@ -69,9 +68,6 @@ def build_val_loader(cfg: Dict[str, Any], dataset_cfg: Dict[str, Any]) -> DataLo
         chrom_list = [str(chrom) for chrom in chromosomes]
     else:
         chrom_list = None
-=======
-    chrom_list = [chromosome] if chromosome is not None else None
->>>>>>> codex/fast
 
     if method == "site":
         ds = du.SignalBAMRefPosValidationDataset(
