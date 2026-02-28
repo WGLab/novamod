@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --time=00:30:00
+#SBATCH --time=00:10:00
 #SBATCH -c 10
 #SBATCH --mem=8G
 #SBATCH -p gpuq

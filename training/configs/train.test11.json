@@ -14,7 +14,7 @@
       "normalize_signal": true,
       "seed": 42
     },
-    "exclude_chromosomes": []
+    "exclude_chromosomes": ["chr22"]
   },
   "loader": {
     "batch_size": 256,

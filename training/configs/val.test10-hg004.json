@@ -39,18 +39,18 @@
     },
     "datasets": [
       {
-        "name": "val",
-        "data_id": "ecoli-nc",
+        "name": "val-hg004",
+        "data_id": "dnaoligos-control1",
         "method": "site",
-        "spec": "/mnt/isilon/wang_lab/zac/software/reference/Ecoli_K12_MG1655_CpG-C.bed",
+        "spec": "../data/oligos/dna/labels/all_5mers_5mC_sites.bed",
         "max_lines": 10000,
         "chromosomes": []
       },
       {
         "name": "test",
-        "data_id": "ecoli-mCpG",
+        "data_id": "dnaoligos-5mC1",
         "method": "site",
-        "spec": "/mnt/isilon/wang_lab/zac/software/reference/Ecoli_K12_MG1655_CpG-C.bed",
+        "spec": "../data/oligos/dna/labels/all_5mers_5mC_sites.bed",
         "max_lines": 10000,
         "chromosomes": []
       }
