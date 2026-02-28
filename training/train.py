@@ -98,32 +98,6 @@ def build_loader(cfg: Dict[str, Any]) -> tuple[Any, DataLoader]:
                 f"Excluding chromosome '{exclude_chromosome}' removed every chromosome from training data."
             )
 
-    data_cfg = cfg["data"]
-    exclude_chromosome = data_cfg.get("exclude_chromosome")
-    exclude_chromosomes = data_cfg.get("exclude_chromosomes")
-    if exclude_chromosome is not None and exclude_chromosomes is not None:
-        raise ValueError("Use only one of data.exclude_chromosome or data.exclude_chromosomes.")
-
-    excluded: set[str] = set()
-    if exclude_chromosome is not None:
-        excluded = {str(exclude_chromosome)}
-    elif exclude_chromosomes is not None:
-        if not isinstance(exclude_chromosomes, list):
-            raise ValueError("data.exclude_chromosomes must be a list of chromosome names.")
-        excluded = {str(chrom) for chrom in exclude_chromosomes}
-
-    chrom_list = None
-    if excluded:
-        import pysam
-
-        with pysam.AlignmentFile(bam, "rb") as bam_file:
-            chrom_list = [chrom for chrom in bam_file.references if chrom not in excluded]
-        if not chrom_list:
-            excluded_str = ", ".join(sorted(excluded))
-            raise ValueError(
-                f"Excluding chromosome(s) [{excluded_str}] removed every chromosome from training data."
-            )
-
     sampling_cfg = du.SamplingConfig(**cfg["data"]["sampling"])
     dataset = du.SignalBAMkmerIterableDataset(
         bam_path=bam,

@@ -14,11 +14,7 @@
       "normalize_signal": true,
       "seed": 42
     },
-<<<<<<< codex/add-chromosome-exclusion-feature-to-training
-    "exclude_chromosomes": []
-=======
     "exclude_chromosome": null
->>>>>>> codex/fast
   },
   "loader": {
     "batch_size": 256,
