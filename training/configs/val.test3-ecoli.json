@@ -44,7 +44,11 @@
         "method": "site",
         "spec": "/mnt/isilon/wang_lab/zac/software/reference/Ecoli_K12_MG1655_CpG-C.bed",
         "max_lines": 10000,
+<<<<<<< codex/add-chromosome-exclusion-feature-to-training
+        "chromosomes": []
+=======
         "chromosome": null
+>>>>>>> codex/fast
       },
       {
         "name": "test",
@@ -52,7 +56,11 @@
         "method": "site",
         "spec": "/mnt/isilon/wang_lab/zac/software/reference/Ecoli_K12_MG1655_CpG-C.bed",
         "max_lines": 10000,
+<<<<<<< codex/add-chromosome-exclusion-feature-to-training
+        "chromosomes": []
+=======
         "chromosome": null
+>>>>>>> codex/fast
       }
     ]
   }

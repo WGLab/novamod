@@ -44,7 +44,11 @@
         "method": "site",
         "spec": "/path/to/all_5mers_5mC_sites.bed",
         "max_lines": 10000,
+<<<<<<< codex/add-chromosome-exclusion-feature-to-training
+        "chromosomes": []
+=======
         "chromosome": null
+>>>>>>> codex/fast
       },
       {
         "name": "test",
@@ -52,7 +56,11 @@
         "method": "site",
         "spec": "/path/to/all_5mers_5mC_sites.bed",
         "max_lines": 10000,
+<<<<<<< codex/add-chromosome-exclusion-feature-to-training
+        "chromosomes": []
+=======
         "chromosome": null
+>>>>>>> codex/fast
       }
     ]
   }
