@@ -40,19 +40,19 @@
     "datasets": [
       {
         "name": "val",
-        "data_id": "ecoli-mCpG",
+        "data_id": "ecoli-nc",
         "method": "site",
-        "spec": "/mnt/isilon/wang_lab/zac/software/reference/Ecoli_K12_MG1655_CpG-C.bed",
+        "spec": "/mnt/isilon/wang_lab/zac/software/reference/Ecoli_K12_MG1655_CG-C.bed",
         "max_lines": 10000,
-        "chromosome": null
+        "chromosomes": []
       },
       {
         "name": "test",
-        "data_id": "ecoli-mCpG",
+        "data_id": "ecoli-5mCG",
         "method": "site",
-        "spec": "/mnt/isilon/wang_lab/zac/software/reference/Ecoli_K12_MG1655_CpG-C.bed",
+        "spec": "/mnt/isilon/wang_lab/zac/software/reference/Ecoli_K12_MG1655_CG-C.bed",
         "max_lines": 10000,
-        "chromosome": null
+        "chromosomes": []
       }
     ]
   }

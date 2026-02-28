@@ -70,6 +70,7 @@ def build_val_loader(cfg: Dict[str, Any], dataset_cfg: Dict[str, Any]) -> DataLo
         chrom_list = None
 
     if method == "site":
+        # Use if you have a genomic per-site label bedfile
         ds = du.SignalBAMRefPosValidationDataset(
             bam_path=bam,
             ref_fasta_path=ref,
@@ -81,6 +82,7 @@ def build_val_loader(cfg: Dict[str, Any], dataset_cfg: Dict[str, Any]) -> DataLo
             chrom_list=chrom_list,
         )
     elif method == "nt":
+        # Use if you have a modkit extracted per-nt label tsv
         ds = du.SignalBAMkmerValidationDataset(
             bam_path=bam,
             ref_fasta_path=ref,
@@ -92,6 +94,7 @@ def build_val_loader(cfg: Dict[str, Any], dataset_cfg: Dict[str, Any]) -> DataLo
             chrom_list=chrom_list,
         )
     elif method == "region":
+        # Use if you want to generate scores for a given region
         chrom, start, end = dataset_cfg["spec"]
         ds = du.SignalBAMRegionDataset(
             bam_path=bam,
