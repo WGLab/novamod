@@ -676,9 +676,10 @@ class SignalBAMRefPosValidationDataset(IterableDataset):
 
             # Determine read strand and pick the correct label bucket
             strand = "-" if read_obj.is_reverse else "+"
-            key = (ref_name, strand)
+            strand_idx = 1 if read_obj.is_reverse else 0
 
-            # Fast range query for labeled ref positions overlapping this read
+            # Fast range query for labeled ref positions overlapping this read.
+            # Labels are read directly from the provided BED6 score column.
             # Note: read_obj.ref_start/ref_end are 0-based; end is exclusive as stored.
             # We also need the ref position to be at least flank away from ends for a full 7-mer.
             ref_lo = int(read_obj.ref_start) + self.flank
@@ -686,7 +687,15 @@ class SignalBAMRefPosValidationDataset(IterableDataset):
             if ref_hi <= ref_lo:
                 continue
 
-            candidates = _range_slice_positions(list(self.labelled_pos_list[ref_name][0].items()), ref_lo, ref_hi)
+            chrom_labels = self.labelled_pos_list.get(ref_name)
+            if chrom_labels is None:
+                continue
+
+            candidates = _range_slice_positions(
+                list(chrom_labels[strand_idx].items()),
+                ref_lo,
+                ref_hi,
+            )
             if not candidates:
                 continue
             

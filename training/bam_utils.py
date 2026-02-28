@@ -179,8 +179,9 @@ def get_pos(path):
                 line=line.rstrip('\n').split('\t')
                 if line[0] not in labelled_pos_list:
                     labelled_pos_list[line[0]]={0:{}, 1:{}}
-                    
-                labelled_pos_list[line[0]][strand_map[line[5]]][int(line[1])]=1.0
+
+                label = float(line[4])
+                labelled_pos_list[line[0]][strand_map[line[5]]][int(line[1])]=label
     return labelled_pos_list
 
 class Read():
