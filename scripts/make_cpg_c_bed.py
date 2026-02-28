@@ -1,22 +1,60 @@
 #!/usr/bin/env python3
 """
-Generate BED6 of single-base CpG cytosine positions from a genome FASTA.
+Generate BED6 of single-base motif-center positions from a genome FASTA.
 
 BED fields:
   chrom  start  end  name  score  strand
 
 Coordinates:
 - BED is 0-based, half-open.
-- '+' strand CpG cytosine: the 'C' in "CG" => [i, i+1)
-- '-' strand CpG cytosine: cytosine on reverse strand corresponds to the 'G' in "GC"
-  on the reference, and its genomic coordinate is the second base of "GC" => [i+1, i+2)
+- '+' strand entries are reported directly from motif matches on the reference.
+- '-' strand entries are reported from reverse-complement motif matches, with center
+  coordinates remapped back to reference coordinates.
 """
 
 from __future__ import annotations
+
 import argparse
 import gzip
 import sys
-from typing import Iterator, Tuple, TextIO
+from typing import Dict, Iterator, List, Tuple, TextIO
+
+
+IUPAC: Dict[str, str] = {
+    "A": "A",
+    "C": "C",
+    "G": "G",
+    "T": "T",
+    "R": "AG",
+    "Y": "CT",
+    "S": "GC",
+    "W": "AT",
+    "K": "GT",
+    "M": "AC",
+    "B": "CGT",
+    "D": "AGT",
+    "H": "ACT",
+    "V": "ACG",
+    "N": "ACGT",
+}
+
+COMPLEMENT: Dict[str, str] = {
+    "A": "T",
+    "C": "G",
+    "G": "C",
+    "T": "A",
+    "R": "Y",
+    "Y": "R",
+    "S": "S",
+    "W": "W",
+    "K": "M",
+    "M": "K",
+    "B": "V",
+    "D": "H",
+    "H": "D",
+    "V": "B",
+    "N": "N",
+}
 
 
 def open_maybe_gzip(path: str) -> TextIO:
@@ -45,69 +83,136 @@ def fasta_records(handle: TextIO) -> Iterator[Tuple[str, str]]:
         yield name, "".join(seq_chunks)
 
 
-def write_cpg_c_bed(
+def reverse_complement_iupac(seq: str) -> str:
+    try:
+        return "".join(COMPLEMENT[base] for base in reversed(seq.upper()))
+    except KeyError as exc:
+        raise ValueError(f"Unsupported IUPAC symbol in motif: {exc.args[0]}") from exc
+
+
+def find_iupac_matches(seq: str, motif: str) -> Iterator[int]:
+    seq_u = seq.upper()
+    motif_u = motif.upper()
+    mlen = len(motif_u)
+
+    allowed_per_pos: List[set[str]] = []
+    for symbol in motif_u:
+        if symbol not in IUPAC:
+            raise ValueError(f"Unsupported IUPAC symbol in motif: {symbol}")
+        allowed_per_pos.append(set(IUPAC[symbol]))
+
+    for start in range(0, len(seq_u) - mlen + 1):
+        window = seq_u[start : start + mlen]
+        if all(base in allowed_per_pos[i] for i, base in enumerate(window)):
+            yield start
+
+
+def center_offsets_for_motif(motif: str, center_base: str) -> List[int]:
+    motif_u = motif.upper()
+    center_u = center_base.upper()
+
+    if center_u not in {"A", "C", "G", "T"}:
+        raise ValueError("--center-base must be one of A/C/G/T")
+
+    offsets = [
+        i for i, symbol in enumerate(motif_u)
+        if symbol in IUPAC and center_u in IUPAC[symbol]
+    ]
+    if not offsets:
+        raise ValueError(
+            f"Center base '{center_u}' cannot occur in motif '{motif_u}' with IUPAC rules"
+        )
+    return offsets
+
+
+def write_motif_center_bed(
     chrom: str,
     seq: str,
     out: TextIO,
+    motif: str,
+    center_base: str,
     plus_only: bool = False,
     minus_only: bool = False,
-    name_prefix: str = "CpG_C",
+    name_prefix: str = "motif_center",
 ) -> None:
-    s = seq.upper()
+    motif_u = motif.upper()
+    mlen = len(motif_u)
 
-    # '+' strand: "CG" -> cytosine is at i
+    plus_offsets = center_offsets_for_motif(motif_u, center_base)
+
     if not minus_only:
-        i = 0
-        while True:
-            j = s.find("CG", i)
-            if j == -1:
-                break
-            start = j
-            end = j + 1
-            name = f"{name_prefix}_{chrom}_{start}_plus"
-            out.write(f"{chrom}\t{start}\t{end}\t{name}\t0\t+\n")
-            i = j + 1
+        emitted_plus = set()
+        for j in find_iupac_matches(seq, motif_u):
+            for offset in plus_offsets:
+                if seq[j + offset].upper() != center_base.upper():
+                    continue
+                start = j + offset
+                if start in emitted_plus:
+                    continue
+                emitted_plus.add(start)
+                end = start + 1
+                name = f"{name_prefix}_{chrom}_{start}_plus"
+                out.write(f"{chrom}\t{start}\t{end}\t{name}\t0\t+\n")
 
-    # '-' strand: reverse CpG is "GC" on reference
-    # cytosine (on '-') aligns to the reference 'G' position, which is the 2nd base of "GC"
     if not plus_only:
-        i = 0
-        while True:
-            j = s.find("GC", i)
-            if j == -1:
-                break
-            start = j + 1
-            end = j + 2
-            name = f"{name_prefix}_{chrom}_{start}_minus"
-            out.write(f"{chrom}\t{start}\t{end}\t{name}\t0\t-\n")
-            i = j + 1
+        rc_motif = reverse_complement_iupac(motif_u)
+        minus_ref_base = COMPLEMENT[center_base.upper()]
+        minus_offsets = center_offsets_for_motif(rc_motif, minus_ref_base)
+
+        emitted_minus = set()
+        for j in find_iupac_matches(seq, rc_motif):
+            for offset in minus_offsets:
+                if seq[j + offset].upper() != minus_ref_base:
+                    continue
+                start = j + offset
+                if start in emitted_minus:
+                    continue
+                emitted_minus.add(start)
+                end = start + 1
+                name = f"{name_prefix}_{chrom}_{start}_minus"
+                out.write(f"{chrom}\t{start}\t{end}\t{name}\t0\t-\n")
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(
-        description="Generate BED of single-base CpG cytosine positions from a genome FASTA."
+        description=(
+            "Generate BED of single-base center positions for motif matches from a genome FASTA."
+        )
     )
     ap.add_argument("fasta", help="Genome FASTA (can be .gz). Use '-' for stdin.")
     ap.add_argument("-o", "--out", default="-", help="Output BED path (default: stdout).")
+    ap.add_argument(
+        "--motif",
+        default="CG",
+        help="Motif in IUPAC symbols (default: CG).",
+    )
+    ap.add_argument(
+        "--center-base",
+        default="C",
+        help="Base to emit within motif matches, one of A/C/G/T (default: C).",
+    )
 
     strand = ap.add_mutually_exclusive_group()
-    strand.add_argument("--plus-only", action="store_true",
-                        help="Only output '+' strand CpG cytosines (C in 'CG').")
-    strand.add_argument("--minus-only", action="store_true",
-                        help="Only output '-' strand CpG cytosines (C on '-', i.e. G in 'GC').")
+    strand.add_argument("--plus-only", action="store_true", help="Only output '+' strand centers.")
+    strand.add_argument("--minus-only", action="store_true", help="Only output '-' strand centers.")
 
-    ap.add_argument("--name-prefix", default="CpG_C", help="Prefix for BED name field.")
+    ap.add_argument("--name-prefix", default="motif_center", help="Prefix for BED name field.")
     args = ap.parse_args()
+
+    if not args.motif:
+        raise SystemExit("--motif cannot be empty")
 
     fin = open_maybe_gzip(args.fasta)
     fout = sys.stdout if args.out == "-" else open(args.out, "w")
 
     try:
         for chrom, seq in fasta_records(fin):
-            write_cpg_c_bed(
+            write_motif_center_bed(
                 chrom=chrom,
                 seq=seq,
                 out=fout,
+                motif=args.motif,
+                center_base=args.center_base,
                 plus_only=args.plus_only,
                 minus_only=args.minus_only,
                 name_prefix=args.name_prefix,
