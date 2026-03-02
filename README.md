@@ -6,11 +6,11 @@ NovaMod is a research codebase for **unsupervised detection of DNA/RNA modificat
 
 Nanopore signals (ionic current traces) are sensitive to chemical modifications such as DNA 5mC and RNA m6A, but many existing methods are supervised and depend on curated labels. In practice, label generation is expensive and model performance can shift across sequencing chemistry, basecaller versions, and experimental domains.
 
-Following the manuscript, this project treats modification discovery as an **anomaly detection** task: learn a generative model of canonical (unmodified) signal, then score deviations as candidate modified events.
+This project treats modification discovery as an **anomaly detection** task: learn a generative model of canonical (unmodified) signal, then score deviations as candidate modified events.
 
 ## Methods summary
 
-The implemented workflow uses a CNN–Transformer variational autoencoder (VAE) and a config-driven training/validation pipeline:
+The implemented workflow uses a CNN–Transformer variational autoencoder (VAE) and a config-driven streaming training/validation pipeline:
 
 1. **Train on unmodified proxy data** (e.g., WGA DNA or IVT RNA) to learn a reference distribution of canonical signal patterns.
 2. **Score per-instance anomalies** using reconstruction-based error metrics from the trained VAE.
@@ -33,7 +33,7 @@ This repository contains the code, configurations, and model artifacts used to r
   - `configs/` — JSON experiment configurations for training and validation runs.
   - `models/` — model definitions (including CNN–Transformer VAE implementation).
   - `state_dicts/` — saved model checkpoints and related exported artifacts.
-  - `evaluation.ipynb`, `supervised-baseline.ipynb` — analysis notebooks.
+  - `evaluation.ipynb` — analysis notebooks.
 - `scripts/`
   - preprocessing and workflow scripts for basecalling, alignment, feature generation, and utility conversions.
 - `paper/`
@@ -66,5 +66,4 @@ sbatch val.sh configs/val.example.json
 
 ## Notes
 
-- The repository is organized around **config-driven experiments**.
 - JSON files in `training/configs/` define dataset paths, model settings, and run parameters for each experiment variant.
