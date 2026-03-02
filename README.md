@@ -1,34 +1,70 @@
-# novamod
+# NovaMod
 
-This repository contains model training and validation workflows for signal-based modification modeling.
+## Project background
 
-## Repository layout
+NovaMod is a research codebase for **unsupervised detection of DNA/RNA modifications** from Oxford Nanopore sequencing data.
 
-- `training/training-online.py`: config-driven online training entrypoint.
-- `training/configs/`: explicit JSON configs for experiments.
-- `training/validation-online_evalOnly.py`: evaluation and anomaly scoring workflow.
-- `training/dataset_utils.py`, `training/feature_utils.py`, `training/bam_utils.py`: core data and feature utilities.
-- `training/models/`: model definitions.
-- `training/state_dicts/`: saved checkpoints (large artifacts).
-- `training/*.ipynb`: exploratory and analysis notebooks.
+Nanopore signals (ionic current traces) are sensitive to chemical modifications such as DNA 5mC and RNA m6A, but many existing methods are supervised and depend on curated labels. In practice, label generation is expensive and model performance can shift across sequencing chemistry, basecaller versions, and experimental domains.
 
-## Implemented organization changes
+Following the manuscript, this project treats modification discovery as an **anomaly detection** task: learn a generative model of canonical (unmodified) signal, then score deviations as candidate modified events.
 
-This repo now uses **explicit experiment configs** for training:
+## Methods summary
 
-- Training parameters are no longer hard-coded inside `training-online.py`.
-- Use `training/configs/train_online.example.json` as a template for runs.
-- Slurm launcher `training/train.sh` accepts a config path argument and passes it through.
+The implemented workflow uses a CNN–Transformer variational autoencoder (VAE) and a config-driven training/validation pipeline:
 
-Example:
+1. **Train on unmodified proxy data** (e.g., WGA DNA or IVT RNA) to learn a reference distribution of canonical signal patterns.
+2. **Score per-instance anomalies** using reconstruction-based error metrics from the trained VAE.
+3. **Aggregate read-level evidence to site level** for downstream ranking, enrichment analysis, and candidate prioritization.
+
+This is intended as a label-light discovery framework for candidate nomination and regional pattern analysis, rather than a fully supervised end-to-end caller.
+
+## Data and code availability
+
+This repository contains the code, configurations, and model artifacts used to reproduce the manuscript’s training and evaluation workflows.
+
+### Repository structure
+
+- `training/`
+  - `train.py` — main training entrypoint (config-driven).
+  - `val.py` — validation/evaluation and anomaly-scoring entrypoint (config-driven).
+  - `train.sh`, `val.sh` — batch wrappers for cluster execution.
+  - `dataset_utils.py`, `feature_utils.py`, `bam_utils.py` — data loading, feature extraction, and BAM/signal processing utilities.
+  - `data_manifest.csv` — dataset bookkeeping used by training/evaluation workflows.
+  - `configs/` — JSON experiment configurations for training and validation runs.
+  - `models/` — model definitions (including CNN–Transformer VAE implementation).
+  - `state_dicts/` — saved model checkpoints and related exported artifacts.
+  - `evaluation.ipynb`, `supervised-baseline.ipynb` — analysis notebooks.
+- `scripts/`
+  - preprocessing and workflow scripts for basecalling, alignment, feature generation, and utility conversions.
+- `paper/`
+  - manuscript sources and figures.
+
+### Where to find models and scripts
+
+- **Model code:** `training/models/`
+- **Trained checkpoints/artifacts:** `training/state_dicts/`
+- **Runnable training/evaluation scripts:** `training/train.py`, `training/val.py`, `training/train.sh`, `training/val.sh`
+- **Data-preparation and pipeline helpers:** `scripts/`
+
+## Reproducibility quick start
+
+From the repository root:
 
 ```bash
 cd training
-python training-online.py --config configs/train_online.example.json
+python train.py --config configs/train.example.json
+python val.py --config configs/val.example.json
 ```
 
-## Next practical improvements
+Cluster examples:
 
-1. Separate source code and generated artifacts into distinct folders.
-2. Standardize script naming (`train_online.py`, `validate_online.py`) while keeping backwards-compatible wrappers.
-3. Add CI checks for syntax and basic utility tests.
+```bash
+cd training
+sbatch train.sh configs/train.example.json
+sbatch val.sh configs/val.example.json
+```
+
+## Notes
+
+- The repository is organized around **config-driven experiments**.
+- JSON files in `training/configs/` define dataset paths, model settings, and run parameters for each experiment variant.
