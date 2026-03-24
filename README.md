@@ -20,7 +20,7 @@ This is intended as a label-light discovery framework for candidate nomination a
 
 ## Data and code availability
 
-This repository contains the code, configurations, and model artifacts used to reproduce the manuscript’s training and evaluation workflows.
+This repository contains the code, configurations, and model artifacts used to reproduce the manuscript’s training and evaluation workflows. It will be maintained and versioned as the project develops. At present, the release is intended as a reproducible research framework with scripts, configurations, and trained models rather than a fully mature end-user package. More user-friendly packaging and broader dataset support are planned for future development.
 
 ### Repository structure
 
