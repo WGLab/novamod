@@ -56,7 +56,7 @@ python train.py --config configs/train.example.json
 python val.py --config configs/val.example.json
 ```
 
-Cluster examples:
+For clusters:
 
 ```bash
 cd training
