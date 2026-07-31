@@ -1,5 +1,7 @@
 # NovaMod
 
+> **Which branch should I use?** This `main` branch is frozen at the state published with the paper and is kept unchanged for reference. Active maintenance lives on the [**`dev`**](https://github.com/WGLab/novamod/tree/dev) branch, which is now the default — it adds the `scripts/pod5_to_bam.py` preprocessing step, pinned dependency versions (`environment.yml`), and corrected example configs and documentation. **If you want to run the pipeline, start from `dev`.**
+
 ## Project background
 
 NovaMod is a research codebase for **unsupervised detection of DNA/RNA modifications** from Oxford Nanopore sequencing data.
