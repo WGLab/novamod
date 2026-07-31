@@ -1,6 +1,6 @@
 {
   "run": {
-    "run_name": "online_test9"
+    "run_name": "example"
   },
   "data": {
     "manifest_path": "data_manifest.csv",

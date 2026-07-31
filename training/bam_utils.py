@@ -291,7 +291,7 @@ class Read():
         if string is False, otherwise return nucleotide string sequence"""
         
         if string:
-            return np.vectorize(num_to_base_map.get)(full_seq) 
+            return np.vectorize(num_to_base_map.get)(self.full_seq)
         else:
             return self.full_seq
     

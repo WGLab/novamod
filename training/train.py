@@ -60,7 +60,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--config",
         type=Path,
-        default=Path("configs/train_online.example.json"),
+        default=Path("configs/train.example.json"),
         help="Path to training config JSON",
     )
     return parser.parse_args()
@@ -85,18 +85,6 @@ def build_loader(cfg: Dict[str, Any]) -> tuple[Any, DataLoader]:
     manifest_path = cfg["data"]["manifest_path"]
     data_id = cfg["data"]["data_id"]
     bam, ref, seq_type = load_manifest(manifest_path, data_id)
-    exclude_chromosome = cfg["data"].get("exclude_chromosome")
-
-    chrom_list = None
-    if exclude_chromosome is not None:
-        import pysam
-
-        with pysam.AlignmentFile(bam, "rb") as bam_file:
-            chrom_list = [chrom for chrom in bam_file.references if chrom != exclude_chromosome]
-        if not chrom_list:
-            raise ValueError(
-                f"Excluding chromosome '{exclude_chromosome}' removed every chromosome from training data."
-            )
 
     data_cfg = cfg["data"]
     exclude_chromosome = data_cfg.get("exclude_chromosome")
