@@ -1,0 +1,33 @@
+# pip-only install of the NovaMod Python dependencies.
+#
+# Versions match the environment used for the manuscript runs. Prefer
+# environment.yml, which also pins samtools/minimap2; those two are needed
+# by scripts/*.sh and are NOT installable from here.
+#
+#   pip install -r requirements.txt
+#
+# For the CUDA 12.4 PyTorch build used in the paper:
+#   pip install torch==2.6.0 --extra-index-url https://download.pytorch.org/whl/cu124
+
+torch==2.6.0
+
+# signal / alignment I/O
+pysam==0.23.0
+pod5==0.3.23
+blosc2==3.3.1
+ont-fast5-api==4.1.3   # only needed for FAST5 input to scripts/pod5_to_bam.py
+
+# numerics
+numpy==2.2.5
+scipy==1.16.0
+pandas==2.2.3
+pyarrow==18.0.0
+numba==0.61.2
+llvmlite==0.44.0
+
+# analysis / figures (notebooks only)
+scikit-learn==1.6.1
+matplotlib==3.10.1
+seaborn==0.13.2
+ipykernel==6.29.5
+tqdm==4.67.1

@@ -1,0 +1,52 @@
+# Conda environment for NovaMod.
+#
+# These are the versions actually used for the manuscript's training and
+# validation runs (captured from the environment recorded in the run logs
+# under training/logs/). CUDA 12.4 build of PyTorch; a CPU-only install
+# works for inference but training is impractically slow.
+#
+#   conda env create -f environment.yml
+#   conda activate novamod
+#
+name: novamod
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.12.9
+  - pip
+
+  # --- signal / alignment I/O -------------------------------------------
+  - pysam=0.23.0            # BAM reading (SignalBAM tags)
+  - samtools>=1.16          # merge/sort in scripts/*.sh
+  - minimap2>=2.24          # alignment in scripts/align_nomod.sh
+
+  # --- numerics ---------------------------------------------------------
+  - numpy=2.2.5
+  - scipy=1.16.0
+  - pandas=2.2.3
+  - pyarrow=18.0.0          # parquet output from val.py
+  - numba=0.61.2            # JIT for feature_utils / bam_utils
+  - llvmlite=0.44.0
+
+  # --- analysis / figures ------------------------------------------------
+  - scikit-learn=1.6.1      # ROC/PRC in the notebooks
+  - matplotlib=3.10.1
+  - seaborn=0.13.2
+  - ipykernel=6.29.5
+  - tqdm=4.67.1
+
+  - pip:
+      # PyTorch: CUDA 12.4 build used for the manuscript runs.
+      # For CPU-only, drop the --extra-index-url line and use torch==2.6.0.
+      - --extra-index-url https://download.pytorch.org/whl/cu124
+      - torch==2.6.0
+
+      # Raw-signal readers used by scripts/pod5_to_bam.py
+      - pod5==0.3.23
+      - blosc2==3.3.1       # SG tag compression (ZSTD + DELTA/SHUFFLE)
+      - ont-fast5-api==4.1.3  # only needed for FAST5 input
+
+# Not installable via conda/pip -- install separately if you need them:
+#   dorado  1.0.2   basecalling (scripts/basecall-*.sh)
+#   modkit          per-read mod labels (scripts/modkit_extract.sh)
