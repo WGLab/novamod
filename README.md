@@ -76,8 +76,6 @@ sbatch scripts/align_mod.sh
 
 Step 3 is the one that creates the `SG` tag. It runs `scripts/pod5_to_bam.py`, which writes one chunk BAM per 100k reads; `generate_features.sh` then merges and sorts them with `samtools cat | samtools sort` into the final indexed SignalBAM.
 
-> **Note.** `scripts/pod5_to_bam.py` is vendored into this repository from the lab's internal `deepmod2-training` tree. It is **not** part of the public [DeepMod2](https://github.com/WGLab/DeepMod2) release — earlier revisions of `generate_features.sh` referenced it by an absolute cluster path, so it could not be found by anyone outside the lab. It is included here so SignalBAM generation is fully reproducible.
-
 ### Labels
 
 Validation needs labels, in one of two forms selected by each dataset's `method`:
