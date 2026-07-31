@@ -7,7 +7,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH -J otrain --out=logs/%x.out
 
-CONFIG_PATH=${1:-configs/train_online.example.json}
+CONFIG_PATH=${1:-configs/train.example.json}
 
 echo "Running training with config: $CONFIG_PATH"
 

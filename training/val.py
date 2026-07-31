@@ -178,6 +178,7 @@ def anomaly_score(
     device: torch.device,
     out_path: Path,
     recon_cfg: Dict[str, Any],
+    kmer_len: int,
 ) -> None:
     model.eval()
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -201,7 +202,10 @@ def anomaly_score(
 
             embs = out["mu"].detach().cpu().numpy()
             labels = y.detach().cpu().numpy()
-            kmers = [fu.decode_kmer(km) for km in kmer.detach().cpu()]
+            # Must pass k explicitly: decode_kmer defaults to k=9, which
+            # silently left-pads shorter k-mers with 'A' (a 7-mer decoded as
+            # 'AAACGTACG' instead of 'ACGTACG').
+            kmers = [fu.decode_kmer(km, k=kmer_len) for km in kmer.detach().cpu()]
             pos_df = pd.json_normalize(_pos_rows_from_batch(pos, batch_size=x.shape[0]))
 
             batch_df = pd.DataFrame(
@@ -241,6 +245,7 @@ def main() -> None:
 
     model_name, model = build_model(cfg)
     run_name = cfg["run"]["run_name"]
+    kmer_len = int(cfg["data"]["sampling"]["kmer_len"])
 
     state_dict = Path("state_dicts") / model_name / f"{run_name}-epoch{checkpoint_epoch}.pt"
     print(f"Loading checkpoint: {state_dict}")
@@ -253,7 +258,14 @@ def main() -> None:
         loader = build_val_loader(cfg, ds_cfg)
         out_path = output_dir / f"{run_name}-{dataset_name}.pq"
         print(f"Scoring dataset '{dataset_name}' -> {out_path}")
-        anomaly_score(model, loader, device, out_path, recon_cfg=cfg.get("train", {}))
+        anomaly_score(
+            model,
+            loader,
+            device,
+            out_path,
+            recon_cfg=cfg.get("train", {}),
+            kmer_len=kmer_len,
+        )
 
 
 if __name__ == "__main__":

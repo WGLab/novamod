@@ -1,0 +1,45 @@
+cff-version: 1.2.0
+message: "If you use NovaMod, please cite the paper below."
+title: "NovaMod: unsupervised detection of DNA/RNA modifications from nanopore signal"
+abstract: >-
+  NovaMod treats nanopore modification discovery as an anomaly-detection
+  task. A CNN-Transformer variational autoencoder is trained on canonical
+  (unmodified) signal from WGA DNA, IVT RNA, or control oligos; candidate
+  modified events are then scored by reconstruction error and aggregated
+  from read level to site level.
+type: software
+license: MIT
+repository-code: "https://github.com/WGLab/novamod"
+
+authors:
+  - family-names: "Zou"
+    given-names: "Yongji"
+  - family-names: "Ahsan"
+    given-names: "Mian Umair"
+  - family-names: "Wang"
+    given-names: "Kai"
+
+keywords:
+  - nanopore
+  - DNA modification
+  - RNA modification
+  - variational autoencoder
+  - anomaly detection
+  - unsupervised learning
+
+preferred-citation:
+  type: article
+  title: "Unsupervised Reference Modeling of Nanopore Signals for DNA/RNA Modification Detection"
+  authors:
+    - family-names: "Zou"
+      given-names: "Yongji"
+    - family-names: "Ahsan"
+      given-names: "Mian Umair"
+    - family-names: "Wang"
+      given-names: "Kai"
+  journal: "Genes"
+  year: 2026
+  volume: 17
+  issue: 5
+  article-number: 525
+  doi: "10.3390/genes17050525"
