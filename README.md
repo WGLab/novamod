@@ -18,12 +18,6 @@ The implemented workflow uses a CNN–Transformer variational autoencoder (VAE) 
 
 This is intended as a label-light discovery framework for candidate nomination and regional pattern analysis, rather than a fully supervised end-to-end caller.
 
-## Citation
-
-If you use NovaMod, please cite:
-
-> Zou, Y.; Ahsan, M.U.; Wang, K. Unsupervised Reference Modeling of Nanopore Signals for DNA/RNA Modification Detection. *Genes* **2026**, *17*(5), 525. https://doi.org/10.3390/genes17050525
-
 ## Data and code availability
 
 This repository contains the code, configurations, and model artifacts used to reproduce the manuscript’s training and evaluation workflows. It will be maintained and versioned as the project develops. At present, the release is intended as a reproducible research framework with scripts, configurations, and trained models rather than a fully mature end-user package. More user-friendly packaging and broader dataset support are planned for future development.
@@ -158,3 +152,9 @@ See `training/README.txt` for what each `online_test*` / `static_test*` run was.
 
 - Checkpoints in `training/state_dicts/` are committed directly, so a clone is large (~4.6 GB of history). Cloning with `--depth 1` is much faster if you only need the current files.
 - `val.py` writes one Parquet file per validation dataset with `score_recon`, `score_kl`, `labels`, `kmer`, `embeddings`, plus position metadata.
+
+## Citation
+
+If you use NovaMod, please cite:
+
+> Zou, Y.; Ahsan, M.U.; Wang, K. Unsupervised Reference Modeling of Nanopore Signals for DNA/RNA Modification Detection. *Genes* **2026**, *17*(5), 525. https://doi.org/10.3390/genes17050525
